@@ -32,6 +32,13 @@ app.post('/todos', (req, res) => {
     .catch(e => res.send(e));
 });
 
+app.get('/todos', (req, res) => {
+  todo
+    .find()
+    .then(todos => res.send({ todos }))
+    .catch(err => res.status(400).send(err));
+});
+
 app.listen(PORT, console.log(`Server started at port: ${PORT}`));
 
 module.exports = app;
