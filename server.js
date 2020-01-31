@@ -22,7 +22,7 @@ app.post('/todos', (req, res) => {
     return res.status(400).json({ msg: 'Text Needed' });
   }
 
-  let newTodo = new todo({
+  let newTodo = new Todo({
     text: req.body.text
   });
 
