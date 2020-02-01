@@ -100,7 +100,7 @@ describe('GET /todos/:id', () => {
   it('should return 404 for non-obj id', done => {
     request(app)
       .get('/todos/12')
-      .expect(404)
+      .expect(400)
       .expect(res => {
         exp(res.body.msg).toBe('ID is Invalid');
       })
@@ -141,7 +141,7 @@ describe('DELETE /todos/:id', () => {
   it('should return 404 if objectId is invalid', done => {
     request(app)
       .delete(`/todos/123abc`)
-      .expect(404)
+      .expect(400)
       .expect(res => {
         exp(res.body.msg).toBe('ID is Invalid');
       })

@@ -1,7 +1,9 @@
 const express = require('express');
+const _ = require('lodash');
 const connectToDB = require('./server/db/mongoose');
 const user = require('./server/models/user');
 const Todo = require('./server/models/todos');
+const { ObjectID } = require('mongodb');
 
 connectToDB();
 
@@ -46,7 +48,7 @@ app.get('/todos/:id', (req, res) => {
     })
     .catch(err => {
       if (err.kind == 'ObjectId')
-        return res.status(404).send({ msg: 'ID is Invalid' });
+        return res.status(400).send({ msg: 'ID is Invalid' });
       res.status(500).send({ msg: 'Unable to Process the Request' });
     });
 });
@@ -61,8 +63,33 @@ app.delete('/todos/:id', (req, res) => {
     })
     .catch(err => {
       if (err.kind == 'ObjectId')
-        return res.status(404).send({ msg: 'ID is Invalid' });
+        return res.status(400).send({ msg: 'ID is Invalid' });
       res.status(500).send({ msg: 'Unable tp process the request' });
+    });
+});
+
+app.patch('/todos/:id', (req, res) => {
+  let id = req.params.id;
+  let body = _.pick(req.body, ['text', 'completed']);
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(400).send({ msg: 'ID is Invalid' });
+  }
+
+  if (_.isBoolean(body.completed) && body.completed) {
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+    .then(todo => {
+      if (!todo) return res.status(404).send({ msg: 'ID not found' });
+      res.status(200).send({ todo });
+    })
+    .catch(e => {
+      res.status(500).send({ msg: 'Unable to process the request' });
     });
 });
 
