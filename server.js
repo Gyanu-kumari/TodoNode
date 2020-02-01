@@ -1,7 +1,7 @@
 const express = require('express');
 const _ = require('lodash');
 const connectToDB = require('./server/db/mongoose');
-const user = require('./server/models/user');
+const User = require('./server/models/user');
 const Todo = require('./server/models/todos');
 const { ObjectID } = require('mongodb');
 
@@ -91,6 +91,19 @@ app.patch('/todos/:id', (req, res) => {
     .catch(e => {
       res.status(500).send({ msg: 'Unable to process the request' });
     });
+});
+
+app.post('/users', (req, res) => {
+  let body = _.pick(req.body, ['email', 'password']);
+  let newUser = new User(body);
+
+  newUser
+    .save()
+    .then(() => {
+      return newUser.generateAuthToken();
+    })
+    .then(token => res.header('x-auth', token).send(newUser))
+    .catch(err => res.status(400).send(err));
 });
 
 app.listen(PORT, console.log(`Server started at port: ${PORT}`));
