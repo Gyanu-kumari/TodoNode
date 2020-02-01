@@ -51,6 +51,21 @@ app.get('/todos/:id', (req, res) => {
     });
 });
 
+app.delete('/todos/:id', (req, res) => {
+  Todo.findByIdAndDelete(req.params.id)
+    .then(todo => {
+      if (!todo) {
+        return res.status(404).send({ msg: 'Todo not found' });
+      }
+      res.status(200).send(todo); // success
+    })
+    .catch(err => {
+      if (err.kind == 'ObjectId')
+        return res.status(404).send({ msg: 'ID is Invalid' });
+      res.status(500).send({ msg: 'Unable tp process the request' });
+    });
+});
+
 app.listen(PORT, console.log(`Server started at port: ${PORT}`));
 
 module.exports = app;

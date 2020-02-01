@@ -5,6 +5,8 @@ const options = {
   useUnifiedTopology: true
 };
 
+mongoose.set('useFindAndModify', false);
+
 const connectToDB = () =>
   mongoose.connect('mongodb://localhost:27017/testTodo', options);
 
