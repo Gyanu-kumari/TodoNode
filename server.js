@@ -4,6 +4,7 @@ const connectToDB = require('./server/db/mongoose');
 const User = require('./server/models/user');
 const Todo = require('./server/models/todos');
 const { ObjectID } = require('mongodb');
+const authenticate = require('./server/middleware/authenticate');
 
 connectToDB();
 
@@ -100,10 +101,14 @@ app.post('/users', (req, res) => {
   newUser
     .save()
     .then(() => {
-      return newUser.generateAuthToken();
+      return newUser.generateAuthToken(); // --
     })
     .then(token => res.header('x-auth', token).send(newUser))
     .catch(err => res.status(400).send(err));
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
 });
 
 app.listen(PORT, console.log(`Server started at port: ${PORT}`));
