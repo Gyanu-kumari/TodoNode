@@ -40,22 +40,21 @@ userSchema.methods.toJSON = function() {
 
   let userObject = user.toObject();
 
-  return _.pick(userObject, ['email', 'password']);
+  return _.pick(userObject, ['_id', 'email']);
 };
 
 userSchema.methods.generateAuthToken = function() {
   let user = this;
 
   let access = 'auth';
+
   let token = jwt
     .sign({ _id: user._id.toHexString(), access }, 'secret123')
     .toString();
 
   user.tokens.push({ access, token });
 
-  return user.save().then(() => {
-    return token;
-  });
+  return user.save().then(() => token);
 };
 
 module.exports = User = mongoose.model('user', userSchema);
