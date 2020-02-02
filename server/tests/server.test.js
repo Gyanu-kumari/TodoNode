@@ -222,11 +222,13 @@ describe('GET /users', () => {
         if (err) {
           return done(err);
         }
-        User.findOne({ email }).then(user => {
-          exp(user).toExist();
-          exp(user.password).toNotBe(password);
-          done();
-        });
+        User.findOne({ email })
+          .then(user => {
+            exp(user).toExist();
+            exp(user.password).toNotBe(password);
+            done();
+          })
+          .catch(e => done(e));
       });
   });
 
@@ -252,5 +254,59 @@ describe('GET /users', () => {
       })
       .expect(400)
       .end(done);
+  });
+});
+
+describe('POST /users/login', () => {
+  it('should login user with valid email and password', done => {
+    request(app)
+      .post('/users/login')
+      .send({
+        email: users[1].email,
+        password: users[1].password
+      })
+      .expect(200)
+      .expect(res => {
+        exp(res.headers['x-auth']).toExist();
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+
+        User.findById(users[1]._id)
+          .then(user => {
+            exp(user.tokens[0]).toInclude({
+              access: 'auth',
+              token: res.header['x-auth']
+            });
+            done();
+          })
+          .catch(e => {
+            done(e);
+          });
+      });
+  });
+  it('should not login credentials not match', done => {
+    request(app)
+      .post('/users/login')
+      .send({
+        email: 'notexist@not.com',
+        password: 'unexist455'
+      })
+      .expect(400)
+      .expect(res => {
+        exp(res.headers['x-auth']).toNotExist();
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+
+        User.findById(users[1]._id)
+          .then(user => {
+            exp(user.tokens.length).toBe(0);
+            done();
+          })
+          .catch(e => {
+            done(e);
+          });
+      });
   });
 });
