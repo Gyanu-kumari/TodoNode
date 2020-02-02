@@ -296,7 +296,7 @@ describe('POST /users/login', () => {
       .expect(res => {
         exp(res.headers['x-auth']).toNotExist();
       })
-      .end((err, res) => {
+      .end(err => {
         if (err) return done(err);
 
         User.findById(users[1]._id)
@@ -307,6 +307,25 @@ describe('POST /users/login', () => {
           .catch(e => {
             done(e);
           });
+      });
+  });
+});
+
+describe('DELETE /users/me/token', () => {
+  it('should remove auth token on logout ', done => {
+    request(app)
+      .delete('/users/me/token')
+      .set('x-auth', users[0].tokens[0].token)
+      .expect(200)
+      .end(err => {
+        if (err) done(err);
+
+        User.findById(users[0]._id)
+          .then(user => {
+            exp(user.tokens.length).toBe(0);
+            done();
+          })
+          .catch(err => done(err));
       });
   });
 });
