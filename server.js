@@ -16,7 +16,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
   //  const { text, completed, completedAt } = req.body;
   //Object.keys(req.body).length === 0
   //Object.entries(req.body).length === 0
@@ -26,7 +26,8 @@ app.post('/todos', (req, res) => {
   }
 
   let newTodo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   newTodo
@@ -35,14 +36,14 @@ app.post('/todos', (req, res) => {
     .catch(e => res.send(e));
 });
 
-app.get('/todos', (req, res) => {
-  Todo.find()
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({ _creator: req.user._id })
     .then(todos => res.send({ todos }))
     .catch(err => res.status(400).send(err));
 });
 
-app.get('/todos/:id', (req, res) => {
-  Todo.findById(req.params.id)
+app.get('/todos/:id', authenticate, (req, res) => {
+  Todo.findOne({ _id: req.params.id, _creator: req.user._id })
     .then(todo => {
       if (!todo) return res.status(404).send({ msg: 'Todo not found' });
       res.status(200).send({ todo });
@@ -54,8 +55,8 @@ app.get('/todos/:id', (req, res) => {
     });
 });
 
-app.delete('/todos/:id', (req, res) => {
-  Todo.findByIdAndDelete(req.params.id)
+app.delete('/todos/:id', authenticate, (req, res) => {
+  Todo.findOneAndDelete({ _id: req.params.id, _creator: req.user._id })
     .then(todo => {
       if (!todo) {
         return res.status(404).send({ msg: 'Todo not found' });
@@ -69,7 +70,7 @@ app.delete('/todos/:id', (req, res) => {
     });
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   let id = req.params.id;
   let body = _.pick(req.body, ['text', 'completed']);
 
@@ -84,7 +85,11 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+  Todo.findOneAndUpdate(
+    { _id: id, _creator: req.user._id },
+    { $set: body },
+    { new: true }
+  )
     .then(todo => {
       if (!todo) return res.status(404).send({ msg: 'ID not found' });
       res.status(200).send({ todo });

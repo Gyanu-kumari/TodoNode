@@ -23,17 +23,26 @@ const users = [
   {
     _id: userTwoId,
     email: 'jen@gmail.com',
-    password: 'userTwopass'
+    password: 'userTwopass',
+    tokens: [
+      {
+        access: 'auth',
+        token: jwt
+          .sign({ _id: userTwoId, access: 'auth' }, 'secret123')
+          .toString()
+      }
+    ]
   }
 ];
 
 let todos = [
-  { _id: new ObjectID(), text: 'Test todo one' },
+  { _id: new ObjectID(), text: 'Test todo one', _creator: userOneId },
   {
     _id: new ObjectID(),
     text: 'Test todo two',
     completed: true,
-    completedAt: 333
+    completedAt: 333,
+    _creator: userTwoId
   }
 ];
 
