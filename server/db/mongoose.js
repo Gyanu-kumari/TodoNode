@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require('../config/config.json');
 
 const options = {
   useNewUrlParser: true,
@@ -8,7 +9,6 @@ const options = {
 
 mongoose.set('useFindAndModify', false);
 
-const connectToDB = () =>
-  mongoose.connect('mongodb://localhost:27017/testTodo', options);
+const connectToDB = () => mongoose.connect(config.URI, options);
 
 module.exports = connectToDB;

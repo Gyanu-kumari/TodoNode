@@ -1,6 +1,7 @@
 const express = require('express');
 const _ = require('lodash');
 const connectToDB = require('./server/db/mongoose');
+const config = require('./server/config/config.json');
 const User = require('./server/models/user');
 const Todo = require('./server/models/todos');
 const { ObjectID } = require('mongodb');
@@ -14,7 +15,7 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || config.PORT;
 
 app.post('/todos', authenticate, (req, res) => {
   //  const { text, completed, completedAt } = req.body;
@@ -65,7 +66,7 @@ app.delete('/todos/:id', authenticate, (req, res) => {
     })
     .catch(err => {
       if (err.kind == 'ObjectId')
-        return res.status(400).send({ msg: 'ID is Invalid' });
+        return res.status(404).send({ msg: 'ID is Invalid' });
       res.status(500).send({ msg: 'Unable tp process the request' });
     });
 });

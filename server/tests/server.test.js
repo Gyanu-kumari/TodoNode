@@ -112,41 +112,46 @@ describe('GET /todos/:id', () => {
       .end(done);
   });
 });
-
 describe('DELETE /todos/:id', () => {
-  it('should remove and return the deleted todo', done => {
-    let hexId = todos[1]._id.toHexString();
+  it('should remove a todo', done => {
+    var hexId = todos[1]._id.toHexString();
+
     request(app)
       .delete(`/todos/${hexId}`)
       .set('x-auth', users[1].tokens[0].token)
       .expect(200)
       .expect(res => {
-        exp(res.body.todo._id).toEqual(todos[1]._id);
+        exp(res.body.todo._id).toBe(hexId);
       })
-      .end(err => {
-        if (err) done(err);
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
 
-        Todo.findById(`${hexId}`)
+        Todo.findById(hexId)
           .then(todo => {
-            exp(todo).toNotExist();
+            exp(todo).toBeFalsy();
             done();
           })
           .catch(e => done(e));
       });
   });
 
-  it('should not remove other users todo ', done => {
-    let hexId = todos[0]._id.toHexString();
+  it('should remove a todo', done => {
+    var hexId = todos[0]._id.toHexString();
+
     request(app)
       .delete(`/todos/${hexId}`)
       .set('x-auth', users[1].tokens[0].token)
       .expect(404)
-      .end(err => {
-        if (err) done(err);
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
 
-        Todo.findById(`${hexId}`)
+        Todo.findById(hexId)
           .then(todo => {
-            exp(todo).toExist();
+            exp(todo).toBeTruthy();
             done();
           })
           .catch(e => done(e));
@@ -154,24 +159,20 @@ describe('DELETE /todos/:id', () => {
   });
 
   it('should return 404 if todo not found', done => {
+    var hexId = new ObjectID().toHexString();
+
     request(app)
-      .delete(`/todos/${new ObjectID().toHexString()}`)
+      .delete(`/todos/${hexId}`)
       .set('x-auth', users[1].tokens[0].token)
       .expect(404)
-      .expect(res => {
-        exp(res.body.msg).toBe('Todo not found');
-      })
       .end(done);
   });
 
-  it('should return 404 if objectId is invalid', done => {
+  it('should return 404 if object id is invalid', done => {
     request(app)
-      .delete(`/todos/123abc`)
+      .delete('/todos/123abc')
       .set('x-auth', users[1].tokens[0].token)
-      .expect(400)
-      .expect(res => {
-        exp(res.body.msg).toBe('ID is Invalid');
-      })
+      .expect(404)
       .end(done);
   });
 });
@@ -191,7 +192,7 @@ describe('PATCH /todos/:id', () => {
       .expect(res => {
         exp(res.body.todo.completed).toBe(true);
         exp(res.body.todo.text).toBe(text);
-        exp(res.body.todo.completedAt).toBeA('number');
+        exp(typeof res.body.todo.completedAt).toBe('number');
       })
       .end(done);
   });
@@ -224,7 +225,7 @@ describe('PATCH /todos/:id', () => {
       .expect(res => {
         exp(res.body.todo.completed).toBe(false);
         exp(res.body.todo.text).toBe(text);
-        exp(res.body.todo.completedAt).toNotExist();
+        exp(res.body.todo.completedAt).toBeFalsy();
       })
       .end(done);
   });
@@ -266,9 +267,9 @@ describe('GET /users', () => {
       })
       .expect(200)
       .expect(res => {
-        exp(res.headers['x-auth']).toExist();
+        exp(res.headers['x-auth']).toBeTruthy();
         exp(res.body.email).toBe(email);
-        exp(res.body._id).toExist();
+        exp(res.body._id).toBeTruthy();
       })
       .end(err => {
         if (err) {
@@ -276,8 +277,8 @@ describe('GET /users', () => {
         }
         User.findOne({ email })
           .then(user => {
-            exp(user).toExist();
-            exp(user.password).toNotBe(password);
+            exp(user).toBeTruthy();
+            exp(user.password).not.toBe(password);
             done();
           })
           .catch(e => done(e));
@@ -319,14 +320,14 @@ describe('POST /users/login', () => {
       })
       .expect(200)
       .expect(res => {
-        exp(res.headers['x-auth']).toExist();
+        exp(res.headers['x-auth']).toBeTruthy();
       })
       .end((err, res) => {
         if (err) return done(err);
 
         User.findById(users[1]._id)
           .then(user => {
-            exp(user.tokens[1]).toInclude({
+            exp(user.toObject().tokens[1]).toMatchObject({
               access: 'auth',
               token: res.header['x-auth']
             });
@@ -346,7 +347,7 @@ describe('POST /users/login', () => {
       })
       .expect(400)
       .expect(res => {
-        exp(res.headers['x-auth']).toNotExist();
+        exp(res.headers['x-auth']).toBeFalsy();
       })
       .end(err => {
         if (err) return done(err);
