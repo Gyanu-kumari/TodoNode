@@ -1,5 +1,6 @@
 const User = require('../models/user');
 
+// receive token and send it with user if exists
 const authenticate = (req, res, next) => {
   let token = req.header('x-auth');
 
